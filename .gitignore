@@ -1,2 +1,6 @@
 *.class
 *.log
+.idea/
+.bsp/
+node_modules/
+target/
