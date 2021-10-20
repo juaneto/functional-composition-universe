@@ -1,17 +1,25 @@
 package scalacon.webapp
 
+import cats.effect.IO
 import org.scalajs.dom
-import org.scalajs.dom.{CanvasRenderingContext2D, document}
-import org.scalajs.dom.html.Canvas
 import org.scalajs.dom.raw.HTMLImageElement
+import scalacon.webapp.FunctionalCompositionApp.domProxy.{createBackground, draw, middle, renderScreen}
 
 import scala.util.Random
 
 object FunctionalCompositionApp {
 
+  val domProxy: DomProxy[IO] = new DomProxy[IO]()
+
   case class Position(x: Double, y: Double)
 
   case class Size(x: Int, y: Int)
+
+  case class Distance(value: Double, speed: Double, toCenter: Double)
+
+  case class Angle(value: Double, speed: Double)
+
+  case class Mass(value: Double)
 
   case class Image(src: String, var angleRotation: Double = 0) {
     private var ready: Boolean = false
@@ -29,93 +37,163 @@ object FunctionalCompositionApp {
   trait SpaceElement {
     val image: Image
     val size: Size
+    val mass: Mass
     var position: Position
   }
 
-  trait hasOrbit extends SpaceElement { var orbit: Movement }
+  trait hasOrbit extends SpaceElement {
+    var distance: Distance
+    var angle: Angle
+  }
+
   trait hasRotation extends SpaceElement {
     var rotation: Rotation
   }
 
-  case class Sun(image: Image, var position: Position, size: Size) extends SpaceElement
-  case class Tenant(image: Image, var position: Position, size: Size, var movement: Movement, var rotation: Rotation) extends SpaceElement with hasRotation
-  case class Satellite(image: Image, var position: Position, size: Size, var orbit: Movement, var rotation: Rotation) extends hasOrbit with hasRotation
-  case class Planet(image: Image, var position: Position, size: Size, var orbit: Movement, satellites: List[Satellite], var rotation: Rotation) extends hasOrbit with hasRotation
+  case class BlackHole(image: Image, var position: Position, size: Size, mass: Mass, stars: List[Star]) extends SpaceElement
+
+  case class Star(image: Image, var position: Position, size: Size, mass: Mass, var distance: Distance, var angle: Angle, planets: List[Planet]) extends SpaceElement with hasOrbit
+
+  case class Tenant(image: Image, var position: Position, size: Size, mass: Mass, var movement: Movement, var rotation: Rotation, var distance: Distance, var angle: Angle) extends SpaceElement with hasRotation
+
+  case class Satellite(image: Image, var position: Position, size: Size, mass: Mass, var rotation: Rotation, var distance: Distance, var angle: Angle) extends hasOrbit with hasRotation
+
+  case class Planet(image: Image, var position: Position, size: Size, mass: Mass, satellites: List[Satellite], var rotation: Rotation, var distance: Distance, var angle: Angle, tenants: List[Tenant]) extends hasOrbit with hasRotation
 
   def main(args: Array[String]): Unit = {
-    document.addEventListener("DOMContentLoaded", { (_: dom.Event) =>
-      setupUI()
-    })
+    domProxy.setup(setupUI)
   }
 
   def setupUI(): Unit = {
-    val canvas = dom.document.createElement("canvas").asInstanceOf[Canvas]
-    val ctx = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+    domProxy.createScenario()
+    domProxy.createBackground()
 
-    def createBackground(): CanvasRenderingContext2D = {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.fillStyle = "#000000"
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      ctx
-    }
+    val moon = Satellite(
+      Image("images/moon.png"),
+      Position(0, 0),
+      Size(20, 20),
+      Mass(0.0004),
+      (r: Double) => r + 0.1,
+      Distance(1.496 * Math.pow(10, 11), 0, 1.496 * Math.pow(10, 11)/150),
+      Angle(Math.PI / 6, 1.990986 *  Math.pow(10, -7)),
+    )
 
-    canvas.width = dom.window.innerWidth.toInt
-    canvas.height = dom.window.innerHeight.toInt
+    val deimos = Satellite(
+      Image("images/moon.png"),
+      Position(0, 0),
+      Size(20, 20),
+      Mass(0.0004),
+      (r: Double) => r + 0.1,
+      Distance(1.496 * Math.pow(10, 11), 0, 1.496 * Math.pow(10, 11)/150),
+      Angle(Math.PI / 6, 1.990986 *  Math.pow(10, -7)),
+    )
 
-    createBackground()
+    val phobos = Satellite(
+      Image("images/moon2.png"),
+      Position(0, 0),
+      Size(15, 15),
+      Mass(0.0004),
+      rotation = (r: Double) => r + 1,
+      Distance(1.396 * Math.pow(10, 11), 0, 1.496 * Math.pow(10, 11)/150),
+      Angle(Math.PI / 6, 1.990986 *  Math.pow(10, -7)),
+    )
 
-    dom.document.body.appendChild(canvas)
+    val dog = Tenant(
+      Image("images/dog.png"),
+      Position(0, 0),
+      Size(25, 25),
+      Mass(1),
+      (p: Position) => Position(p.x, p.y),
+      (r: Double) => r + 0.01,
+      Distance(0, 0, 0),
+      Angle(0, 0)
+    )
 
-    val sun = Sun(Image("images/sun.png"), Position((canvas.width / 2) - 20, (canvas.height / 2) - 25), Size(50, 50))
-    val moon = Satellite(Image("images/moon.png"), Position((canvas.width / 2) - 50, (canvas.height / 2) - 50), Size(50, 50), (p: Position) => Position(p.x+1, p.y), (r: Double) => r+0.1)
-    val moon2 = Satellite(Image("images/moon.png"), Position((canvas.width / 2) - 100, (canvas.height / 2) - 100), Size(20, 20), (p: Position) => Position(p.x+1, p.y), (r: Double) => r+0.3)
-    val mars = Planet(Image("images/mars.png"), Position(sun.position.x - 100, sun.position.y - 100), Size(100, 100), (p: Position) => Position(p.x+1, p.y), List(moon, moon2), (r: Double) => r+0.01)
-    val dog = Tenant(Image("images/dog.png"), Position(sun.position.x, sun.position.y), Size(25, 25), (p: Position) => Position(p.x, p.y), (r: Double) => r+0.01)
+    val mars = Planet(
+      Image("images/mars.png"),
+      Position(0, 0),
+      Size(50, 50),
+      Mass(1.98855 * Math.pow(10, 30)),
+      List(deimos, phobos),
+      (r: Double) => r + 0.01,
+      Distance(1.596 * Math.pow(10, 11), 0, 1.496 * Math.pow(10, 11)/150),
+      Angle(Math.PI / 6, 1.990986 * Math.pow(10, -7)),
+      List(dog)
+    )
 
-    val planets = List(sun, mars)
+    val earth = Planet(
+      Image("images/earth.png"),
+      Position(0, 0),
+      Size(60, 60),
+      Mass(1.98855 * Math.pow(10, 30)),
+      List(moon),
+      (r: Double) => r + 0.01,
+      Distance(1.496 * Math.pow(10, 11), 0, 1.496 * Math.pow(10, 11)/150),
+      Angle(Math.PI / 6, 1.990986 * Math.pow(10, -7)),
+      List(dog)
+    )
 
-    def rotate[T <: hasRotation]= (spaceElement: T) => {
+    val sun = Star(
+      Image("images/sun.png"),
+      Position(0, 0),
+      Size(75, 75),
+      Mass(1.98855 * Math.pow(10, 30)),
+      Distance(1.500 * Math.pow(10, 11), 400, 1.5 * Math.pow(10, 11)/75),
+      Angle(Math.PI / 1, 1.990986 * Math.pow(10, -7)),
+      List(mars, earth)
+    )
+
+    val blackHole = BlackHole(
+      Image("images/blackHole.png"),
+      middle(),
+      Size(50, 50),
+      Mass(1.48855 * Math.pow(10, 30)),
+      List(sun)
+    )
+
+    def rotate[T <: hasRotation] = (spaceElement: T) => {
       spaceElement.image.angleRotation = spaceElement.rotation(spaceElement.image.angleRotation)
       spaceElement
     }
 
-    def orbit[T <: hasOrbit] = (planet: T) => {
-      planet.position = planet.orbit(planet.position)
+    def orbit[T <: hasOrbit, E <: SpaceElement] = (planet: T, planet2: E) => {
+      val physics = new Physics(planet2)
+      (physics.calculateDistanceAcceleration compose physics.calculateAngleAcceleration compose physics.calculateNewOrbitPosition) (planet)
+
       planet
     }
 
     def liveOnMars = (tenant: Tenant) => {
-      tenant.movement = (_: Position) => Position(mars.position.x-Random.between(10, 50), mars.position.y-Random.between(10, 50))
-      tenant.position = tenant.movement(tenant.position)
+      tenant.position = Position(mars.position.x - Random.between(10, tenant.size.x), mars.position.y - Random.between(10, tenant.size.y))
       tenant
     }
 
-    def satellites = (planet: Planet) => {
-      planet.satellites.foreach(satellite =>  (orbit compose rotate[Satellite] compose draw[Satellite]) (satellite))
+    def orbitSatellites = (planet: Planet) => {
+      planet.satellites.map(satellite => ((orbit[Satellite, Planet](_, planet)) compose rotate[Satellite] compose draw[Satellite]) (satellite))
       planet
     }
 
-    def draw[T <: SpaceElement]= (spaceElement: T) => {
-      ctx.save()
-      ctx.translate(spaceElement.position.x-(spaceElement.size.x/2), spaceElement.position.y-(spaceElement.size.y/2))
-      ctx.rotate(spaceElement.image.angleRotation)
-      ctx.translate(-spaceElement.position.x-(spaceElement.size.x/2), -spaceElement.position.y-(spaceElement.size.y/2))
-      ctx.drawImage(spaceElement.image.element, spaceElement.position.x, spaceElement.position.y, spaceElement.size.x, spaceElement.size.y)
-      ctx.restore()
-      spaceElement
+    def orbitPlanets = (star: Star) => {
+      star.planets.map(planet => ((orbit[Planet, Star](_,sun)) compose rotate[Planet] compose draw[Planet] compose orbitSatellites compose tenants) (planet))
+      star
     }
 
-    def render(): Unit = {
+    def orbitStars = (blackHole: BlackHole) => {
+      blackHole.stars.map(star => (draw[Star] compose (orbit[Star, BlackHole](_, blackHole)) compose orbitPlanets) (star))
+      blackHole
+    }
+
+    def tenants = (planet: Planet) => {
+      planet.tenants.map(tenant => (draw compose rotate[Tenant] compose liveOnMars) (tenant))
+      planet
+    }
+
+    def render() = {
       createBackground()
-
-      if (planets.forall(_.image.isReady)) {
-        draw(sun)
-        (orbit compose rotate[Planet] compose draw[Planet] compose satellites)(mars)
-        (draw compose rotate[Tenant] compose liveOnMars)(dog)
-      }
+      (orbitStars compose draw[BlackHole]) (blackHole)
     }
 
-    dom.window.setInterval(() => render(), 100)
+    renderScreen(render)
 
   }
 
