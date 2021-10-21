@@ -1,6 +1,7 @@
 package scalacon.webapp
 
 import org.scalajs.dom.html.Canvas
+import org.scalajs.dom.raw.HTMLImageElement
 import org.scalajs.dom.{CanvasRenderingContext2D, Event, document, window}
 import scalacon.webapp.FunctionalCompositionApp.{Position, SpaceElement, domProxy}
 
@@ -31,6 +32,12 @@ class DomProxy[F[_]] {
     context.drawImage(spaceElement.image.element, spaceElement.position.x, spaceElement.position.y, spaceElement.size.x, spaceElement.size.y)
     context.restore()
     spaceElement
+  }
+
+  def createDomImgElement(src: String): HTMLImageElement = {
+    val element = document.createElement("img").asInstanceOf[HTMLImageElement]
+    element.src = src
+    element
   }
 
   def renderScreen(renderFunction: () => Unit): Unit = {

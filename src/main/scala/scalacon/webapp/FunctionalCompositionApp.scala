@@ -1,9 +1,8 @@
 package scalacon.webapp
 
 import cats.effect.IO
-import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLImageElement
-import scalacon.webapp.FunctionalCompositionApp.domProxy.{createBackground, draw, middle, renderScreen}
+import scalacon.webapp.FunctionalCompositionApp.domProxy.{createDomImgElement, middle, draw, renderScreen, createBackground}
 
 import scala.util.Random
 
@@ -22,13 +21,7 @@ object FunctionalCompositionApp {
   case class Mass(value: Double)
 
   case class Image(src: String, var angleRotation: Double = 0) {
-    private var ready: Boolean = false
-
-    val element: HTMLImageElement = dom.document.createElement("img").asInstanceOf[HTMLImageElement]
-    element.onload = (_: dom.Event) => ready = true
-    element.src = src
-
-    def isReady: Boolean = ready
+    val element: HTMLImageElement = createDomImgElement(src)
   }
 
   type Movement = Position => Position
