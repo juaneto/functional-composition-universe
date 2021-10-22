@@ -1,20 +1,54 @@
 package scalacon.webapp
 
-import org.scalajs.dom.html.Canvas
-import org.scalajs.dom.raw.HTMLImageElement
-import org.scalajs.dom.{CanvasRenderingContext2D, Event, document, window}
-import scalacon.webapp.FunctionalCompositionApp.{Position, SpaceElement, domProxy}
+import org.scalajs.dom._
+import org.scalajs.dom.html.{Canvas, Input}
+import org.scalajs.dom.raw.{HTMLImageElement, HTMLInputElement}
+import scalacon.webapp.FunctionalCompositionApp.{Position, SpaceElement}
 
-class DomProxy[F[_]] {
+import scala.scalajs.js
+
+
+class DomProxy[F[_]]() {
 
   private val canvas: Canvas = document.createElement("canvas").asInstanceOf[Canvas]
   private val context: CanvasRenderingContext2D = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
+
+  private val sliderActive: Boolean = false
 
   def createScenario(): (Canvas, CanvasRenderingContext2D) = {
     canvas.width = window.innerWidth.toInt
     canvas.height = window.innerHeight.toInt
     document.body.appendChild(canvas)
+    if(sliderActive) createSlider()
     (canvas, context)
+  }
+
+  private def createSlider(): Node = {
+    def updateSlider(slider: Element, e: Event): Unit = {
+      slider.setAttribute("value", e.target.asInstanceOf[HTMLInputElement].value)
+      js.Dynamic.global.mass = e.target.asInstanceOf[HTMLInputElement].value.toDouble
+      document.getElementById("sunMassText").innerHTML = s"Mass of the sun: ${slider.getAttribute("value")}"
+    }
+
+    def sliderText(): Node = {
+      val text = document.createElement("div")
+      text.id = "sunMassText"
+      text.innerHTML = "Mass of the sun: 1"
+      document.body.appendChild(text)
+    }
+
+    val slider = document.createElement("input")
+    slider.setAttribute("type", "range")
+    slider.setAttribute("min", "0")
+    slider.setAttribute("max", "5")
+    slider.setAttribute("class", "slider")
+    slider.setAttribute("step", "0.1")
+    slider.setAttribute("value", "1")
+    slider.asInstanceOf[Input].onchange = (e: Event) => {
+      updateSlider(slider, e)
+    }
+    sliderText()
+    document.body.appendChild(slider)
   }
 
   def createBackground(): CanvasRenderingContext2D = {
@@ -29,29 +63,36 @@ class DomProxy[F[_]] {
     context.translate(spaceElement.position.x - (spaceElement.size.x / 2), spaceElement.position.y - (spaceElement.size.y / 2))
     context.rotate(spaceElement.image.angleRotation)
     context.translate(-spaceElement.position.x - (spaceElement.size.x / 2), -spaceElement.position.y - (spaceElement.size.y / 2))
-    context.drawImage(spaceElement.image.element, spaceElement.position.x, spaceElement.position.y, spaceElement.size.x, spaceElement.size.y)
+    context.drawImage(createImgElement(spaceElement.image.src), spaceElement.position.x, spaceElement.position.y, spaceElement.size.x, spaceElement.size.y)
     context.restore()
     spaceElement
   }
 
-  def createDomImgElement(src: String): HTMLImageElement = {
+  def createImgElement(src: String): HTMLImageElement = {
     val element = document.createElement("img").asInstanceOf[HTMLImageElement]
     element.src = src
     element
   }
 
   def renderScreen(renderFunction: () => Unit): Unit = {
-    window.setInterval(() => renderFunction(), 1)
+    window.setInterval(() => {
+      createBackground()
+      renderFunction()
+    }, 1)
   }
 
   def middle(): Position = {
-    Position(domProxy.canvas.width / 2, domProxy.canvas.height / 2)
+    Position(canvas.width / 2, canvas.height / 2)
   }
 
   def setup(setupFunction: () => Unit): Unit = {
     document.addEventListener("DOMContentLoaded", { (_: Event) =>
       setupFunction()
     })
+  }
+
+  def massDeviation(): Double = {
+    js.Dynamic.global.mass.toString.toDouble
   }
 
 }

@@ -1,8 +1,7 @@
 package scalacon.webapp
 
 import cats.effect.IO
-import org.scalajs.dom.raw.HTMLImageElement
-import scalacon.webapp.FunctionalCompositionApp.domProxy.{createDomImgElement, middle, draw, renderScreen, createBackground}
+import scalacon.webapp.FunctionalCompositionApp.domProxy.{draw, middle, renderScreen, setup, createScenario}
 
 import scala.util.Random
 
@@ -20,9 +19,7 @@ object FunctionalCompositionApp {
 
   case class Mass(value: Double)
 
-  case class Image(src: String, var angleRotation: Double = 0) {
-    val element: HTMLImageElement = createDomImgElement(src)
-  }
+  case class Image(src: String, var angleRotation: Double = 0)
 
   type Movement = Position => Position
   type Rotation = Double => Double
@@ -51,15 +48,14 @@ object FunctionalCompositionApp {
 
   case class Satellite(image: Image, var position: Position, size: Size, mass: Mass, var rotation: Rotation, var distance: Distance, var angle: Angle) extends hasOrbit with hasRotation
 
-  case class Planet(image: Image, var position: Position, size: Size, mass: Mass, satellites: List[Satellite], var rotation: Rotation, var distance: Distance, var angle: Angle, tenants: List[Tenant]) extends hasOrbit with hasRotation
+  case class Planet(image: Image, var position: Position = Position(0,0), size: Size, mass: Mass, satellites: List[Satellite], var rotation: Rotation, var distance: Distance, var angle: Angle, tenants: List[Tenant]) extends hasOrbit with hasRotation
 
   def main(args: Array[String]): Unit = {
-    domProxy.setup(setupUI)
+    setup(setupUI)
   }
 
   def setupUI(): Unit = {
-    domProxy.createScenario()
-    domProxy.createBackground()
+    createScenario()
 
     val moon = Satellite(
       Image("images/moon.png"),
@@ -68,7 +64,7 @@ object FunctionalCompositionApp {
       Mass(0.0004),
       (r: Double) => r + 0.1,
       Distance(1.496 * Math.pow(10, 11), 0, 1.496 * Math.pow(10, 11)/150),
-      Angle(Math.PI / 6, 1.990986 *  Math.pow(10, -7)),
+      Angle(Math.PI / 6, 1.990986 *  Math.pow(10, -7))
     )
 
     val deimos = Satellite(
@@ -128,7 +124,7 @@ object FunctionalCompositionApp {
 
     val sun = Star(
       Image("images/sun.png"),
-      Position(0, 0),
+      middle(),
       Size(75, 75),
       Mass(1.98855 * Math.pow(10, 30)),
       Distance(1.500 * Math.pow(10, 11), 400, 1.5 * Math.pow(10, 11)/75),
@@ -182,8 +178,9 @@ object FunctionalCompositionApp {
     }
 
     def render() = {
-      createBackground()
       (orbitStars compose draw[BlackHole]) (blackHole)
+      //draw (sun)
+      //(draw[Planet] compose (orbit[Planet, Star](_, sun)) compose rotate[Planet]) (mars)
     }
 
     renderScreen(render)

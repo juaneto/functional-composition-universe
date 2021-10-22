@@ -2,10 +2,65 @@
 <html>
   <head>
     <meta charset="UTF-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@1,200&display=swap" rel="stylesheet">
     <title>A functional composition of the Universe</title>
   </head>
   <body>
+  <style>
+
+    .slider {
+      position: absolute;
+      bottom: 30px;
+      -webkit-appearance: none;
+      width: 25%;
+      height: 25px;
+      background: #d3d3d3;
+      outline: none;
+      opacity: 0.7;
+      -webkit-transition: .2s;
+      transition: opacity .2s;
+      left: 0;
+      right: 0;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .slider:hover {
+      opacity: 1;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 25px;
+      height: 50px;
+      background: rgb(255, 95, 0);
+      cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 25px;
+      height: 50px;
+      background: #04AA6D;
+      cursor: pointer;
+    }
+
+    #sunMassText {
+      font-size: 20px;
+      color: white;
+      position: absolute;
+      bottom: 0px;
+      left: 0;
+      right: 0;
+      margin-left: auto;
+      margin-right: auto;
+      width: 187px;
+    }
+  </style>
     <!-- Include Scala.js compiled code -->
-    <script type="text/javascript" src="./target/scala-2.13/functionalcompostionuniverse-fastopt/main.js"></script>
+    <script>var mass = 1</script>
+    <script type="text/javascript" src="./target/scala-2.13/functionalcompositionuniverse-fastopt/main.js"></script>
   </body>
 </html>

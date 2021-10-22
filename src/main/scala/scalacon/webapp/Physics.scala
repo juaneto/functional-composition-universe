@@ -1,5 +1,6 @@
 package scalacon.webapp
 
+import scalacon.webapp.FunctionalCompositionApp.domProxy.massDeviation
 import scalacon.webapp.FunctionalCompositionApp.{Angle, Position, SpaceElement, hasOrbit}
 
 import scala.math.pow
@@ -17,7 +18,7 @@ class Physics(val planetTOrbit: SpaceElement) {
   def calculateDistanceAcceleration: ChangeInOrbit = (planet: hasOrbit) => {
     // [acceleration of distance] = [distance][angular velocity]^2 - G * M / [distance]^2
     val distanceAcceleration = planet.distance.value * Math.pow(planet.angle.speed, 2) -
-      (gravitationalConstant * planetTOrbit.mass.value) / Math.pow(planet.distance.value, 2)
+      (gravitationalConstant * planetTOrbit.mass.value * massDeviation().toString.toDouble) / Math.pow(planet.distance.value, 2)
     planet.distance = planet.distance.copy(
       value = newValue(planet.distance.value, deltaT, planet.distance.speed),
       speed = newValue(planet.distance.speed, deltaT, distanceAcceleration),

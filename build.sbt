@@ -2,7 +2,7 @@ enablePlugins(ScalaJSPlugin)
 
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
-name := "functionalCompostionUniverse"
+name := "functionalCompositionUniverse"
 scalaVersion := "2.13.6"
 
 // This is an application with a main method
