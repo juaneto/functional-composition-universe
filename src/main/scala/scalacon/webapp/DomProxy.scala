@@ -3,6 +3,7 @@ package scalacon.webapp
 import org.scalajs.dom._
 import org.scalajs.dom.html.{Canvas, Input}
 import org.scalajs.dom.raw.{HTMLImageElement, HTMLInputElement}
+import scalacon.webapp.Config.sliderActive
 import scalacon.webapp.FunctionalCompositionApp.{Position, SpaceElement}
 
 import scala.scalajs.js
@@ -12,8 +13,6 @@ class DomProxy[F[_]]() {
 
   private val canvas: Canvas = document.createElement("canvas").asInstanceOf[Canvas]
   private val context: CanvasRenderingContext2D = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
-
-  private val sliderActive: Boolean = false
 
   def createScenario(): (Canvas, CanvasRenderingContext2D) = {
     canvas.width = window.innerWidth.toInt

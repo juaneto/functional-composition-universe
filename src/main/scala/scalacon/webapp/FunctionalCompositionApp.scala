@@ -140,39 +140,39 @@ object FunctionalCompositionApp {
       List(sun)
     )
 
-    def rotate[T <: hasRotation] = (spaceElement: T) => {
+    def rotate[T <: hasRotation]: T => T = (spaceElement: T) => {
       spaceElement.image.angleRotation = spaceElement.rotation(spaceElement.image.angleRotation)
       spaceElement
     }
 
-    def orbit[T <: hasOrbit, E <: SpaceElement] = (planet: T, planet2: E) => {
-      val physics = new Physics(planet2)
-      (physics.calculateDistanceAcceleration compose physics.calculateAngleAcceleration compose physics.calculateNewOrbitPosition) (planet)
+    def orbit[T <: hasOrbit, E <: SpaceElement]: (T, E) => T = (spaceElement: T, spaceElementToOrbit: E) => {
+      val physics = new Physics(spaceElementToOrbit)
+      (physics.calculateDistanceAcceleration compose physics.calculateAngleAcceleration compose physics.calculateNewOrbitPosition) (spaceElement)
 
-      planet
+      spaceElement
     }
 
-    def liveOnMars = (tenant: Tenant) => {
+    def liveOnMars: Tenant => Tenant = (tenant: Tenant) => {
       tenant.position = Position(mars.position.x - Random.between(10, tenant.size.x), mars.position.y - Random.between(10, tenant.size.y))
       tenant
     }
 
-    def orbitSatellites = (planet: Planet) => {
+    def orbitSatellites: Planet => Planet = (planet: Planet) => {
       planet.satellites.map(satellite => ((orbit[Satellite, Planet](_, planet)) compose rotate[Satellite] compose draw[Satellite]) (satellite))
       planet
     }
 
-    def orbitPlanets = (star: Star) => {
+    def orbitPlanets: Star => Star = (star: Star) => {
       star.planets.map(planet => ((orbit[Planet, Star](_,sun)) compose rotate[Planet] compose draw[Planet] compose orbitSatellites compose tenants) (planet))
       star
     }
 
-    def orbitStars = (blackHole: BlackHole) => {
+    def orbitStars: BlackHole => BlackHole = (blackHole: BlackHole) => {
       blackHole.stars.map(star => (draw[Star] compose (orbit[Star, BlackHole](_, blackHole)) compose orbitPlanets) (star))
       blackHole
     }
 
-    def tenants = (planet: Planet) => {
+    def tenants: Planet => Planet = (planet: Planet) => {
       planet.tenants.map(tenant => (draw compose rotate[Tenant] compose liveOnMars) (tenant))
       planet
     }
