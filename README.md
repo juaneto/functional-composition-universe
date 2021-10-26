@@ -1,6 +1,6 @@
 # Functional composition of the Universe
 
-###Build and run
+### Build and run
 To regenerate the js file: `sbt fastOptJS`
 
 To see the work open `functional-composition-universe-fastopt.html` file
