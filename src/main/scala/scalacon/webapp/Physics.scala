@@ -1,7 +1,8 @@
 package scalacon.webapp
 
-import scalacon.webapp.FunctionalCompositionApp.domProxy.massDeviation
-import scalacon.webapp.FunctionalCompositionApp.{Angle, Position, SpaceElement, hasOrbit}
+import scalacon.webapp.Config.collisions
+import scalacon.webapp.FunctionalCompositionApp.domProxy.{massDeviation, middle}
+import scalacon.webapp.FunctionalCompositionApp._
 
 import scala.math.pow
 
@@ -27,6 +28,7 @@ class Physics(val planetTOrbit: SpaceElement) {
   }
 
   def calculateAngleAcceleration: ChangeInOrbit = (planet: hasOrbit) => {
+    // [acceleration of angle] = - 2[speed][angular velocity] / [distance]
     val angleAcceleration = -2.0 * planet.distance.speed * planet.angle.speed / planet.distance.value
     planet.angle = Angle(
       newValue(planet.angle.value, deltaT, planet.angle.speed),
@@ -43,4 +45,27 @@ class Physics(val planetTOrbit: SpaceElement) {
     )
     planet
   }
+
+  def calculateCollision: ChangeInOrbit = (planet: hasOrbit) => {
+    def isInCollision: Boolean = {
+      if ((planet.position.x - planet.size.x/2 >= planetTOrbit.position.x - planetTOrbit.size.x) &&
+        (planet.position.x + planet.size.x/2 <= planetTOrbit.position.x + planetTOrbit.size.x)
+      &&
+        ((planet.position.y - planet.size.x/2 >= planetTOrbit.position.y - planetTOrbit.size.y) &&
+          (planet.position.y + planet.size.x/2 <= planetTOrbit.position.y + planetTOrbit.size.y))) {
+            return true
+      }
+      false
+    }
+
+    if(collisions && isInCollision) {
+      planetTOrbit.image = Image("images/collision.png")
+      planetTOrbit.size = Size(500, 500)
+      planetTOrbit.position = middle(planetTOrbit.size)
+      planet.size = Size(0, 0)
+    }
+
+    planet
+  }
+
 }

@@ -4,7 +4,7 @@ import org.scalajs.dom._
 import org.scalajs.dom.html.{Canvas, Input}
 import org.scalajs.dom.raw.{HTMLImageElement, HTMLInputElement}
 import scalacon.webapp.Config.sliderActive
-import scalacon.webapp.FunctionalCompositionApp.{Position, SpaceElement}
+import scalacon.webapp.FunctionalCompositionApp.{Position, Size, SpaceElement}
 
 import scala.scalajs.js
 
@@ -80,8 +80,8 @@ class DomProxy[F[_]]() {
     }, 1)
   }
 
-  def middle(): Position = {
-    Position(canvas.width / 2, canvas.height / 2)
+  def middle(size: Size): Position = {
+    Position((canvas.width / 2) + size.x / 2, (canvas.height / 2 ) + size.y / 2)
   }
 
   def setup(setupFunction: () => Unit): Unit = {

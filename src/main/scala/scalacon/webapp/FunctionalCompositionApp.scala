@@ -25,8 +25,8 @@ object FunctionalCompositionApp {
   type Rotation = Double => Double
 
   trait SpaceElement {
-    val image: Image
-    val size: Size
+    var image: Image
+    var size: Size
     val mass: Mass
     var position: Position
   }
@@ -40,15 +40,15 @@ object FunctionalCompositionApp {
     var rotation: Rotation
   }
 
-  case class BlackHole(image: Image, var position: Position, size: Size, mass: Mass, stars: List[Star]) extends SpaceElement
+  case class BlackHole(var image: Image, var position: Position, var size: Size, mass: Mass, stars: List[Star]) extends SpaceElement
 
-  case class Star(image: Image, var position: Position, size: Size, mass: Mass, var distance: Distance, var angle: Angle, planets: List[Planet]) extends SpaceElement with hasOrbit
+  case class Star(var image: Image, var position: Position, var size: Size, mass: Mass, var distance: Distance, var angle: Angle, planets: List[Planet]) extends SpaceElement with hasOrbit
 
-  case class Tenant(image: Image, var position: Position, size: Size, mass: Mass, var movement: Movement, var rotation: Rotation, var distance: Distance, var angle: Angle) extends SpaceElement with hasRotation
+  case class Tenant(var image: Image, var position: Position, var size: Size, mass: Mass, var movement: Movement, var rotation: Rotation, var distance: Distance, var angle: Angle) extends SpaceElement with hasRotation
 
-  case class Satellite(image: Image, var position: Position, size: Size, mass: Mass, var rotation: Rotation, var distance: Distance, var angle: Angle) extends hasOrbit with hasRotation
+  case class Satellite(var image: Image, var position: Position, var size: Size, mass: Mass, var rotation: Rotation, var distance: Distance, var angle: Angle) extends hasOrbit with hasRotation
 
-  case class Planet(image: Image, var position: Position = Position(0,0), size: Size, mass: Mass, satellites: List[Satellite], var rotation: Rotation, var distance: Distance, var angle: Angle, tenants: List[Tenant]) extends hasOrbit with hasRotation
+  case class Planet(var image: Image, var position: Position = Position(0,0), var size: Size, mass: Mass, satellites: List[Satellite], var rotation: Rotation, var distance: Distance, var angle: Angle, tenants: List[Tenant]) extends hasOrbit with hasRotation
 
   def main(args: Array[String]): Unit = {
     setup(setupUI)
@@ -89,7 +89,7 @@ object FunctionalCompositionApp {
 
     val dog = Tenant(
       Image("images/dog.png"),
-      Position(0, 0),
+      middle(Size(25, 25)),
       Size(25, 25),
       Mass(1),
       (p: Position) => Position(p.x, p.y),
@@ -124,7 +124,7 @@ object FunctionalCompositionApp {
 
     val sun = Star(
       Image("images/sun.png"),
-      middle(),
+      middle(Size(75, 75)),
       Size(75, 75),
       Mass(1.98855 * Math.pow(10, 30)),
       Distance(1.500 * Math.pow(10, 11), 400, 1.5 * Math.pow(10, 11)/75),
@@ -134,7 +134,7 @@ object FunctionalCompositionApp {
 
     val blackHole = BlackHole(
       Image("images/blackHole.png"),
-      middle(),
+      middle(Size(50, 50)),
       Size(50, 50),
       Mass(1.48855 * Math.pow(10, 30)),
       List(sun)
@@ -147,13 +147,18 @@ object FunctionalCompositionApp {
 
     def orbit[T <: hasOrbit, E <: SpaceElement]: (T, E) => T = (spaceElement: T, spaceElementToOrbit: E) => {
       val physics = new Physics(spaceElementToOrbit)
-      (physics.calculateDistanceAcceleration compose physics.calculateAngleAcceleration compose physics.calculateNewOrbitPosition) (spaceElement)
-
+      (physics.calculateDistanceAcceleration compose physics.calculateAngleAcceleration compose physics.calculateNewOrbitPosition compose physics.calculateCollision) (spaceElement)
       spaceElement
     }
 
-    def liveOnMars: Tenant => Tenant = (tenant: Tenant) => {
-      tenant.position = Position(mars.position.x - Random.between(10, tenant.size.x), mars.position.y - Random.between(10, tenant.size.y))
+    def beGiant[T <: SpaceElement]: T => T = (spaceElement: T) => {
+      spaceElement.size = Size(500, 500)
+      spaceElement.position = middle(Size(500, 500))
+      spaceElement
+    }
+
+    def liveOnPlanet: (Tenant, Planet) => Tenant = (tenant: Tenant, planet: Planet) => {
+      tenant.position = Position(planet.position.x - Random.between(10, tenant.size.x), planet.position.y - Random.between(10, tenant.size.y))
       tenant
     }
 
@@ -173,14 +178,25 @@ object FunctionalCompositionApp {
     }
 
     def tenants: Planet => Planet = (planet: Planet) => {
-      planet.tenants.map(tenant => (draw compose rotate[Tenant] compose liveOnMars) (tenant))
+      planet.tenants.map(tenant => (draw compose rotate[Tenant] compose (liveOnPlanet(_, planet))) (tenant))
       planet
     }
 
     def render() = {
-      (orbitStars compose draw[BlackHole]) (blackHole)
+      //(orbitStars compose draw[BlackHole]) (blackHole)
       //draw (sun)
       //(draw[Planet] compose (orbit[Planet, Star](_, sun)) compose rotate[Planet]) (mars)
+
+
+      //// CONF SCRIPT ////
+      //1 .this is Sarri
+      //(draw compose beGiant[Tenant] compose rotate[Tenant]) (dog)
+      //2.
+      //draw (sun)
+      //(draw[Planet] compose (orbit[Planet, Star](_, sun))) (earth)
+      //3.
+      (draw[BlackHole] compose orbitStars) (blackHole)
+
     }
 
     renderScreen(render)
