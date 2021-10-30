@@ -17,8 +17,8 @@ Rotation of the T spaceElement through the rotation function of the spaceElement
 #### Orbit `orbit[T <: hasOrbit, E <: SpaceElement]: (T, E) => T`
 Orbit movement of the T around the E using the Physics functions of `calculateDistanceAcceleration`, `calculateAngleAcceleration` and `calculateNewOrbitPosition`.
 
-#### LiveOnMars `liveOnMars: Tenant => Tenant`
-Change position of the tenant inside the Mars planet space.
+#### LiveOnPlanet `liveOnPlanet: (Tenant, Planet) => Tenant`
+Change position of the tenant inside the planet input space.
 
 #### OrbitSatellites `orbitSatellites: Planet => Planet`
 Composition of `draw`, `orbit` and `rotate` functions with the satellites of the planet as input.
@@ -26,7 +26,7 @@ Composition of `draw`, `orbit` and `rotate` functions with the satellites of the
 #### OrbitPlanets `orbitPlanets: Star => Star` 
 Composition of `draw`, `orbit`, `rotate`, `OrbitSatellites` and `tenants` functions with the planets of the star as input.
 
-#### OrbitStars `orbitStars: BlackHole => BlackHole`
+####OrbitStars `orbitStars: BlackHole => BlackHole`
 Composition of `draw`, `orbit` and `orbitPlanets` functions with the stars of the black hole as input.
 
 #### Tenants `tenants: Planet => Planet`
