@@ -26,7 +26,7 @@ Composition of `draw`, `orbit` and `rotate` functions with the satellites of the
 #### OrbitPlanets `orbitPlanets: Star => Star` 
 Composition of `draw`, `orbit`, `rotate`, `OrbitSatellites` and `tenants` functions with the planets of the star as input.
 
-####OrbitStars `orbitStars: BlackHole => BlackHole`
+#### OrbitStars `orbitStars: BlackHole => BlackHole`
 Composition of `draw`, `orbit` and `orbitPlanets` functions with the stars of the black hole as input.
 
 #### Tenants `tenants: Planet => Planet`

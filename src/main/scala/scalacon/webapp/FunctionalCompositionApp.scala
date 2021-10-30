@@ -23,7 +23,7 @@ object FunctionalCompositionApp {
       Size(20, 20),
       Mass(0.0004),
       (r: Double) => r + 0.1,
-      Distance(1.596 * Math.pow(10, 11), 0, 1.496 * Math.pow(10, 11) / 150),
+      Distance(1.3100 * Math.pow(10, 11), 0, 1.496 * Math.pow(10, 11) / 150),
       Angle(Math.PI / 6, 1.990986 * Math.pow(10, -7)),
     )
 
@@ -38,7 +38,7 @@ object FunctionalCompositionApp {
     )
 
     val phobos = Satellite(
-      Image("images/moon2.png"),
+      Image("images/phobos.png"),
       Position(0, 0),
       Size(15, 15),
       Mass(0.0004),
