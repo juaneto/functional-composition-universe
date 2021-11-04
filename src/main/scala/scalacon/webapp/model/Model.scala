@@ -28,14 +28,20 @@ object Model {
     def currentSize(x: T): Size
   }
 
+  object Orbital {
+    def apply[T: Orbital]: Orbital[T] = implicitly
+  }
+
   trait Rotary[T] {
     def rotate(element: T): T
     def copyRotation(element: T, image: Image): T
   }
 
-  object Orbital {
-    def apply[T: Orbital]: Orbital[T] = implicitly
+  object Rotary {
+    def apply[T: Rotary]: Rotary[T] = implicitly
   }
+
+
 
 }
 
