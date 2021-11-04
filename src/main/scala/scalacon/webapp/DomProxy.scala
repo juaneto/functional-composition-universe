@@ -4,10 +4,10 @@ import org.scalajs.dom._
 import org.scalajs.dom.html.{Canvas, Input}
 import org.scalajs.dom.raw.{HTMLImageElement, HTMLInputElement}
 import scalacon.webapp.Config.sliderActive
-import scalacon.webapp.Model._
+import scalacon.webapp.model.Model
+import scalacon.webapp.model.Model._
 
 import scala.scalajs.js
-
 
 class DomProxy[F[_]]() {
 
@@ -57,15 +57,19 @@ class DomProxy[F[_]]() {
     context
   }
 
-  def draw[T <: SpaceElement]: T => T = (spaceElement: T) => {
+  private def drawInCanvas[T: Drawable](spaceElement: T) = {
     context.save()
-    context.translate(spaceElement.position.x - (spaceElement.size.x / 2), spaceElement.position.y - (spaceElement.size.y / 2))
-    context.rotate(spaceElement.image.angleRotation)
-    context.translate(-spaceElement.position.x - (spaceElement.size.x / 2), -spaceElement.position.y - (spaceElement.size.y / 2))
-    context.drawImage(createImgElement(spaceElement.image.src), spaceElement.position.x, spaceElement.position.y, spaceElement.size.x, spaceElement.size.y)
+    context.translate(Drawable[T].currentPosition(spaceElement).x - (Drawable[T].currentSize(spaceElement).x / 2), Drawable[T].currentPosition(spaceElement).y - (Drawable[T].currentSize(spaceElement).y / 2))
+    context.rotate(Drawable[T].getImage(spaceElement).angleRotation)
+    context.translate(-Drawable[T].currentPosition(spaceElement).x - (Drawable[T].currentSize(spaceElement).x / 2), -Drawable[T].currentPosition(spaceElement).y - (Drawable[T].currentSize(spaceElement).y / 2))
+    context.drawImage(createImgElement(Drawable[T].getImage(spaceElement).src), Drawable[T].currentPosition(spaceElement).x, Drawable[T].currentPosition(spaceElement).y, Drawable[T].currentSize(spaceElement).x, Drawable[T].currentSize(spaceElement).y)
     context.restore()
     spaceElement
   }
+
+  def draw[T: Drawable](spaceElement: T): T = drawInCanvas(spaceElement)
+
+  def draw[T: Drawable]: T => T = (spaceElement: T) => drawInCanvas(spaceElement)
 
   def createImgElement(src: String): HTMLImageElement = {
     val element = document.createElement("img").asInstanceOf[HTMLImageElement]

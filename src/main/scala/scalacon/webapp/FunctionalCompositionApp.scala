@@ -2,7 +2,9 @@ package scalacon.webapp
 
 import cats.effect.IO
 import scalacon.webapp.FunctionalCompositionApp.domProxy.{createScenario, draw, middle, renderScreen, setup}
-import scalacon.webapp.Model.{Tenant, _}
+import scalacon.webapp.Physics.{calculateAngleAcceleration, calculateCollision, calculateDistanceAcceleration, calculateNewOrbitPosition}
+import scalacon.webapp.model.Model._
+import scalacon.webapp.model.{BlackHole, Planet, Satellite, Star, Tenant}
 
 import scala.util.Random
 
@@ -67,12 +69,13 @@ object FunctionalCompositionApp {
       (r: Double) => r + 0.01,
       Distance(1.612 * Math.pow(10, 11), 0, 0.896 * Math.pow(10, 11)/200),
       Angle(Math.PI / 6, 2.1 * Math.pow(10, -7)),
-      List(dog)
+      List()
     )
 
     val earth = Planet(
       Image("images/earth.png"),
       Position(0, 0),
+      //middle(Size(60, 60)),
       Size(60, 60),
       Mass(1.98855 * Math.pow(10, 30)),
       List(moon),
@@ -87,8 +90,8 @@ object FunctionalCompositionApp {
       middle(Size(75, 75)),
       Size(75, 75),
       Mass(1.98855 * Math.pow(10, 30)),
-      (r: Double) => r + 0.01,
-      Distance(1.500 * Math.pow(10, 11), 400, 1.5 * Math.pow(10, 11)/75),
+      (r: Double) => r + 0.001,
+      Distance(1.500 * Math.pow(10, 11), 400, 1.5 * Math.pow(10, 11) / 75),
       Angle(Math.PI / 1, 1.990986 * Math.pow(10, -7)),
       List(mars, earth)
     )
@@ -101,48 +104,44 @@ object FunctionalCompositionApp {
       List(sun)
     )
 
-    def rotate[T <: HasRotation]: T => T = (spaceElement: T) =>
-      spaceElement.copyRotation(spaceElement, image = spaceElement.image.copy(angleRotation = spaceElement.rotation(spaceElement.image.angleRotation))).asInstanceOf[T]
+    val blackHole2 = BlackHole(
+      Image("images/blackHole.png"),
+      middle(Size(500, 500)),
+      Size(50, 50),
+      Mass(1.48855 * Math.pow(10, 30)),
+      List(sun)
+    )
 
-    def orbit[T <: HasOrbit, E <: SpaceElement]: (T, E) => T = (spaceElement: T, spaceElementToOrbit: E) => {
-      val physics = new Physics(spaceElementToOrbit)
-      val spaceElementMoved = (physics.calculateDistanceAcceleration andThen physics.calculateAngleAcceleration andThen physics.calculateNewOrbitPosition andThen physics.calculateCollision) (spaceElement)
-      spaceElementMoved.asInstanceOf[T]
-    }
+    var galaxies = List(blackHole, blackHole2)
 
-    def beGiant: Tenant => Tenant = (tenant: Tenant) =>
+    def makeGiant: Tenant => Tenant = (tenant: Tenant) =>
       tenant.copy(size = Size(500, 500), position = middle(Size(500, 500)))
 
-    def liveOnPlanet: (Tenant, Planet) => Tenant = (tenant: Tenant, planet: Planet) =>
-      tenant.copy(position = Position(planet.position.x - Random.between(10, tenant.size.x), planet.position.y - Random.between(10, tenant.size.y)))
+    def liveOnPlanet(tenant: Tenant, planet: Planet): Tenant =
+      tenant.copy(position = Position(planet.position.x - Random.between(3, tenant.size.x), planet.position.y - Random.between(3, tenant.size.y)))
 
-    def orbitSatellites: Planet => Planet = (planet: Planet) =>
-      planet.copy(satellites = planet.satellites.map(satellite => (draw[Satellite] compose (orbit[Satellite, Planet](_, planet)) compose rotate[Satellite]) (satellite)))
+    def orbitPlanets(star: Star)(implicit rotable: Rotary[Planet]): Star =
+      star.copy(planets = star.planets.map(planet => (draw[Planet] compose rotable.rotate compose (orbit[Planet, Star](_: Planet, star))) (planet)))
 
-    def orbitPlanets: Star => Star = (star: Star) =>
-      star.copy(planets = star.planets.map(planet => (draw compose rotate[Planet] compose (orbit[Planet, Star](_, star)) compose orbitSatellites) (planet)))
+    def orbit[T: Orbital, E: Orbital](planet: T, spaceElementToOrbit: E): T =
+      ((calculateDistanceAcceleration(_: T, spaceElementToOrbit))
+        andThen (calculateAngleAcceleration(_: T))
+        andThen (calculateNewOrbitPosition(_: T, spaceElementToOrbit))
+        andThen (calculateCollision(_: T, spaceElementToOrbit))) (planet)
 
-    def orbitStars: BlackHole => BlackHole = (blackHole: BlackHole) =>
-      blackHole.copy(stars = blackHole.stars.map(star => (draw[Star] compose (orbit[Star, BlackHole](_, blackHole)) compose orbitPlanets) (star)))
+    def orbitSatellites(planet: Planet)(implicit rotable: Rotary[Satellite]): Planet =
+      planet.copy(satellites = planet.satellites.map(satellite => (draw[Satellite] compose (orbit[Satellite, Planet](_: Satellite, planet)) compose rotable.rotate) (satellite)))
+
+    def orbitStars(blackHole: BlackHole)(implicit rotable: Rotary[Star]): BlackHole =
+      blackHole.copy(stars = blackHole.stars.map(star => (draw[Star] compose rotable.rotate compose (orbit[Star, BlackHole](_: Star, blackHole)) compose orbitPlanets) (star)))
 
     def tenants: Planet => Planet = (planet: Planet) =>
-      planet.copy(tenants = planet.tenants.map(tenant => (draw compose (liveOnPlanet(_, planet))) (tenant)))
+      planet.copy(tenants = planet.tenants.map(tenant => (draw[Tenant] compose (liveOnPlanet(_, planet)))(tenant)))
+
+    def orbitGalaxies: List[BlackHole] => List[BlackHole] = (blackHoles: List[BlackHole]) =>
+      blackHoles.map(blackHole => (draw[BlackHole] compose orbitStars) (blackHole))
 
     def render(): Unit = {
-      //(orbitStars compose draw[BlackHole]) (blackHole)
-      //draw (sun)
-      //(draw[Planet] compose (orbit[Planet, Star](_, sun)) compose rotate[Planet]) (mars)
-
-
-      //// CONF SCRIPT ////
-      //1 .this is Sarri
-      //(draw compose beGiant) (dog)
-
-      //2.
-      //(draw compose rotate[Planet]) (earth)
-      //draw (sun)
-      //earth = (draw[Planet] compose (orbit[Planet, Star](_, sun)) compose rotate[Planet]) (earth)
-      //3.
       blackHole = (draw[BlackHole] compose orbitStars) (blackHole)
     }
 

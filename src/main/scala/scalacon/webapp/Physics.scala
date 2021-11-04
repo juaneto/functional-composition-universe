@@ -2,11 +2,11 @@ package scalacon.webapp
 
 import scalacon.webapp.Config.collisions
 import scalacon.webapp.FunctionalCompositionApp.domProxy.{massDeviation, middle}
-import scalacon.webapp.Model._
+import scalacon.webapp.model.Model._
 
 import scala.math.pow
 
-class Physics(val planetTOrbit: SpaceElement) {
+object Physics {
 
   private val gravitationalConstant: Double = 6.67408 * pow(10, -11)
 
@@ -14,48 +14,46 @@ class Physics(val planetTOrbit: SpaceElement) {
 
   private def newValue(currentValue: Double, deltaT: Double, derivative: Double): Double = currentValue + deltaT * derivative
 
-  type ChangeInOrbit = HasOrbit => HasOrbit
-
-  def calculateDistanceAcceleration: ChangeInOrbit = (spaceElement: HasOrbit) => {
+  def calculateDistanceAcceleration[T: Orbital, E: Orbital](element: T, planetToOrbit: E): T = {
     // [acceleration of distance] = [distance][angular velocity]^2 - G * M / [distance]^2
-    val distanceAcceleration = spaceElement.distance.value * Math.pow(spaceElement.angle.speed, 2) -
-      (gravitationalConstant * planetTOrbit.mass.value * massDeviation()) / Math.pow(spaceElement.distance.value, 2)
-    spaceElement.copyOrbit(spaceElement, spaceElement.distance.copy(
-      value = newValue(spaceElement.distance.value, deltaT, spaceElement.distance.speed),
-      speed = newValue(spaceElement.distance.speed, deltaT, distanceAcceleration),
+    val distanceAcceleration = Orbital[T].currentDistance(element).value * Math.pow(Orbital[T].currentAngle(element).speed, 2) -
+      (gravitationalConstant * Orbital[E].currentMass(planetToOrbit).value * massDeviation()) / Math.pow(Orbital[T].currentDistance(element).value, 2)
+    Orbital[T].copyOrbit(element, Orbital[T].currentDistance(element).copy(
+      value = newValue(Orbital[T].currentDistance(element).value, deltaT, Orbital[T].currentDistance(element).speed),
+      speed = newValue(Orbital[T].currentDistance(element).speed, deltaT, distanceAcceleration),
     ))
   }
 
-  def calculateAngleAcceleration: ChangeInOrbit = (spaceElement: HasOrbit) => {
+  def calculateAngleAcceleration[T: Orbital](element: T): T = {
     // [acceleration of angle] = - 2[speed][angular velocity] / [distance]
-    val angleAcceleration = -2.0 * spaceElement.distance.speed * spaceElement.angle.speed / spaceElement.distance.value
+    val angleAcceleration = -2.0 * Orbital[T].currentDistance(element).speed * Orbital[T].currentAngle(element).speed / Orbital[T].currentDistance(element).value
 
-    if (spaceElement.angle.value > 2 * Math.PI) {
-      spaceElement.copyOrbit(spaceElement, spaceElement.angle.copy(value = spaceElement.angle.value % (2 * Math.PI)))
+    if (Orbital[T].currentAngle(element).value > 2 * Math.PI) {
+      Orbital[T].copyOrbit(element, Orbital[T].currentAngle(element).copy(value = Orbital[T].currentAngle(element).value % (2 * Math.PI)))
     } else {
-      spaceElement.copyOrbit(spaceElement, Angle(
-        newValue(spaceElement.angle.value, deltaT, spaceElement.angle.speed),
-        newValue(spaceElement.angle.speed, deltaT, angleAcceleration)
+      Orbital[T].copyOrbit(element, Angle(
+        newValue(Orbital[T].currentAngle(element).value, deltaT, Orbital[T].currentAngle(element).speed),
+        newValue(Orbital[T].currentAngle(element).speed, deltaT, angleAcceleration)
       ))
     }
   }
 
-  def calculateNewOrbitPosition: ChangeInOrbit = (spaceElement: HasOrbit) => {
-    spaceElement.copyOrbit(spaceElement, Position(
-      Math.cos(spaceElement.angle.value) * spaceElement.distance.value / spaceElement.distance.toCenter + planetTOrbit.position.x,
-      Math.sin(-spaceElement.angle.value) * spaceElement.distance.value / spaceElement.distance.toCenter + planetTOrbit.position.y
+  def calculateNewOrbitPosition[T: Orbital, E: Orbital](element: T, planetToOrbit: E): T = {
+    Orbital[T].copyOrbit(element, Position(
+      Math.cos(Orbital[T].currentAngle(element).value) * Orbital[T].currentDistance(element).value / Orbital[T].currentDistance(element).toCenter + Orbital[E].currentPosition(planetToOrbit).x,
+      Math.sin(-Orbital[T].currentAngle(element).value) * Orbital[T].currentDistance(element).value / Orbital[T].currentDistance(element).toCenter + Orbital[E].currentPosition(planetToOrbit).y
     ))
   }
 
-  def calculateCollision: ChangeInOrbit = (planet: HasOrbit) => {
-    def isCoincidenceInX: Boolean = (planet.position.x - planet.size.x/2 > planetTOrbit.position.x - planetTOrbit.size.x) && (planet.position.x + planet.size.x/2 < planetTOrbit.position.x + planetTOrbit.size.x)
-    def isCoincidenceInY: Boolean = (planet.position.y - planet.size.x/2 > planetTOrbit.position.y - planetTOrbit.size.y) && (planet.position.y + planet.size.x/2 < planetTOrbit.position.y + planetTOrbit.size.y)
+  def calculateCollision[T: Orbital, E: Orbital](element: T, planetToOrbit: E): T = {
+    def isCoincidenceInX: Boolean = (Orbital[T].currentPosition(element).x - Orbital[T].currentSize(element).x/2 > Orbital[E].currentPosition(planetToOrbit).x - Orbital[E].currentSize(planetToOrbit).x) && (Orbital[T].currentPosition(element).x + Orbital[T].currentSize(element).x/2 < Orbital[E].currentPosition(planetToOrbit).x + Orbital[E].currentSize(planetToOrbit).x)
+    def isCoincidenceInY: Boolean = (Orbital[T].currentPosition(element).y - Orbital[T].currentSize(element).x/2 > Orbital[E].currentPosition(planetToOrbit).y - Orbital[E].currentSize(planetToOrbit).y) && (Orbital[T].currentPosition(element).y + Orbital[T].currentSize(element).x/2 < Orbital[E].currentPosition(planetToOrbit).y + Orbital[E].currentSize(planetToOrbit).y)
     def isInCollision: Boolean = collisions && isCoincidenceInX && isCoincidenceInY
 
-    if(collisions && isInCollision || planet.size.x == 1000) {
-      planet.copyOrbit(planet, Image("images/collision.png"), Size(1000, 1000), middle(Size(1000, 1000)))
+    if(collisions && isInCollision || Orbital[T].currentSize(element).x == 1000) {
+      Orbital[T].copyOrbit(element, Image("images/collision.png"), Size(1000, 1000), middle(Size(1000, 1000)))
     } else {
-      planet
+      element
     }
   }
 

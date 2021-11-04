@@ -5,3 +5,7 @@
 node_modules/
 target/
 .DS_Store
+.metals
+.bloop
+/.vscode/
+metals.sbt
