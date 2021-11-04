@@ -1,5 +1,8 @@
 # Functional composition of the Universe
 
+### Slides ScalaCon 2021
+https://docs.google.com/presentation/d/14d3IJNcqBcRHS2IHwOPus7ygFB8BZNzRbwj-0W66xDo
+
 ### Build and run
 To regenerate the js file: `sbt fastOptJS`
 
