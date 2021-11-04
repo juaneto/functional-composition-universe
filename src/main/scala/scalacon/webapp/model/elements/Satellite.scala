@@ -1,6 +1,7 @@
-package scalacon.webapp.model
+package scalacon.webapp.model.elements
 
 import scalacon.webapp.model.Model._
+import scalacon.webapp.model._
 
 case class Satellite(image: Image,
                      position: Position,

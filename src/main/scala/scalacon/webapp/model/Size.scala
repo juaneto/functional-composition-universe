@@ -1,5 +1,3 @@
 package scalacon.webapp.model
 
-class Size {
-
-}
+case class Size(x: Int, y: Int)

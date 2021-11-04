@@ -1,5 +1,3 @@
 package scalacon.webapp.model
 
-class Distance {
-
-}
+case class Distance(value: Double, speed: Double, toCenter: Double)

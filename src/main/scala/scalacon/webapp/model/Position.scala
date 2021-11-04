@@ -1,3 +1,3 @@
 package scalacon.webapp.model
 
-case class Position()
+case class Position(x: Double, y: Double)

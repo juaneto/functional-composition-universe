@@ -2,18 +2,6 @@ package scalacon.webapp.model
 
 object Model {
 
-  case class Position(x: Double, y: Double)
-
-  case class Size(x: Int, y: Int)
-
-  case class Distance(value: Double, speed: Double, toCenter: Double)
-
-  case class Angle(value: Double, speed: Double)
-
-  case class Mass(value: Double)
-
-  case class Image(src: String, angleRotation: Double = 0)
-
   type Movement = Position => Position
 
   type Rotation = Double => Double
@@ -22,6 +10,10 @@ object Model {
     def currentPosition(x: T): Position
     def currentSize(x: T): Size
     def getImage(x: T): Image
+  }
+
+  object Drawable {
+    def apply[T: Drawable]: Drawable[T] = implicitly
   }
 
   trait Orbital[T] {
@@ -36,7 +28,6 @@ object Model {
     def currentSize(x: T): Size
   }
 
-
   trait Rotary[T] {
     def rotate(element: T): T
     def copyRotation(element: T, image: Image): T
@@ -46,12 +37,5 @@ object Model {
     def apply[T: Orbital]: Orbital[T] = implicitly
   }
 
-  object Rotary {
-    def apply[T: Rotary]: Rotary[T] = implicitly
-  }
-
-  object Drawable {
-    def apply[T: Drawable]: Drawable[T] = implicitly
-  }
 }
 

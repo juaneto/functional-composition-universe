@@ -4,8 +4,8 @@ import org.scalajs.dom._
 import org.scalajs.dom.html.{Canvas, Input}
 import org.scalajs.dom.raw.{HTMLImageElement, HTMLInputElement}
 import scalacon.webapp.Config.sliderActive
-import scalacon.webapp.model.Model
 import scalacon.webapp.model.Model._
+import scalacon.webapp.model.{Position, Size}
 
 import scala.scalajs.js
 
@@ -84,7 +84,7 @@ class DomProxy[F[_]]() {
     }, 1)
   }
 
-  def middle(size: Size): Model.Position = {
+  def middle(size: Size): Position = {
     Position((canvas.width / 2) + size.x / 2, (canvas.height / 2 ) + size.y / 2)
   }
 

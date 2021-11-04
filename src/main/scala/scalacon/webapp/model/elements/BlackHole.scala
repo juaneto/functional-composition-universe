@@ -1,6 +1,9 @@
-package scalacon.webapp.model
+package scalacon.webapp.model.elements
 
-import scalacon.webapp.model.Model.{Angle, Distance, Drawable, Image, Mass, Orbital, Position, Size}
+import scalacon.webapp.model.Model.{Drawable, Orbital}
+import scalacon.webapp.model._
+
+import scala.annotation.tailrec
 
 case class BlackHole(image: Image,
                      position: Position,
@@ -20,9 +23,9 @@ object BlackHole {
 
     def copyOrbit(blackHole: BlackHole, image: Image, size: Size, position: Position): BlackHole = blackHole
 
-    override def currentAngle(x: BlackHole): Angle = currentAngle(x)
+    @tailrec def currentAngle(x: BlackHole): Angle = currentAngle(x)
 
-    override def currentDistance(x: BlackHole): Distance = currentDistance(x)
+    @tailrec def currentDistance(x: BlackHole): Distance = currentDistance(x)
 
     override def currentPosition(x: BlackHole): Position = x.position
 

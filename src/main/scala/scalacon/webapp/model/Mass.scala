@@ -1,5 +1,3 @@
 package scalacon.webapp.model
 
-class Mass {
-
-}
+case class Mass(value: Double)

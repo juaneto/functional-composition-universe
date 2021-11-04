@@ -1,6 +1,8 @@
-package scalacon.webapp.model
+package scalacon.webapp.model.elements
 
-import scalacon.webapp.model.Model._
+import scalacon.webapp.model.Model.{Drawable, Orbital, Rotary, Rotation}
+import scalacon.webapp.model.{Angle, Distance, Image, Mass, Position, Size}
+
 
 case class Planet(image: Image,
                   position: Position,

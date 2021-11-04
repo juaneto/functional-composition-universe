@@ -2,6 +2,7 @@ package scalacon.webapp
 
 import scalacon.webapp.Config.collisions
 import scalacon.webapp.FunctionalCompositionApp.domProxy.{massDeviation, middle}
+import scalacon.webapp.model.{Angle, Image, Position, Size}
 import scalacon.webapp.model.Model._
 
 import scala.math.pow

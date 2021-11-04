@@ -1,5 +1,3 @@
 package scalacon.webapp.model
 
-class Image {
-
-}
+case class Image(src: String, angleRotation: Double = 0)

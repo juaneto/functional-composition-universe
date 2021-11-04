@@ -1,5 +1,3 @@
 package scalacon.webapp.model
 
-class Angle {
-
-}
+case class Angle(value: Double, speed: Double)

@@ -4,7 +4,8 @@ import cats.effect.IO
 import scalacon.webapp.FunctionalCompositionApp.domProxy.{createScenario, draw, middle, renderScreen, setup}
 import scalacon.webapp.Physics.{calculateAngleAcceleration, calculateCollision, calculateDistanceAcceleration, calculateNewOrbitPosition}
 import scalacon.webapp.model.Model._
-import scalacon.webapp.model.{BlackHole, Planet, Satellite, Star, Tenant}
+import scalacon.webapp.model.{Angle, Distance, Image, Mass, Position, Size}
+import scalacon.webapp.model.elements.{BlackHole, Planet, Satellite, Star, Tenant}
 
 import scala.util.Random
 
