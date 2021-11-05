@@ -23,4 +23,3 @@ object Tenant {
     override def getImage(x: Tenant): Image = x.image
   }
 }
-

@@ -121,20 +121,17 @@ object FunctionalCompositionApp {
     def liveOnPlanet(tenant: Tenant, planet: Planet): Tenant =
       tenant.copy(position = Position(planet.position.x - Random.between(3, tenant.size.x), planet.position.y - Random.between(3, tenant.size.y)))
 
-    def orbitPlanets(star: Star)(implicit rotable: Rotary[Planet]): Star =
-      star.copy(planets = star.planets.map(planet => (draw[Planet] compose rotable.rotate compose (orbit[Planet, Star](_: Planet, star))) (planet)))
-
     def orbit[T: Orbital, E: Orbital](planet: T, spaceElementToOrbit: E): T =
       ((calculateDistanceAcceleration(_: T, spaceElementToOrbit))
         andThen (calculateAngleAcceleration(_: T))
         andThen (calculateNewOrbitPosition(_: T, spaceElementToOrbit))
         andThen (calculateCollision(_: T, spaceElementToOrbit))) (planet)
 
-    def orbitSatellites(planet: Planet)(implicit rotable: Rotary[Satellite]): Planet =
-      planet.copy(satellites = planet.satellites.map(satellite => (draw[Satellite] compose (orbit[Satellite, Planet](_: Satellite, planet)) compose rotable.rotate) (satellite)))
+    def orbitSatellites(planet: Planet)(implicit rotary: Rotary[Satellite]): Planet =
+      planet.copy(satellites = planet.satellites.map(satellite => (draw[Satellite] compose (orbit[Satellite, Planet](_: Satellite, planet)) compose rotary.rotate) (satellite)))
 
-    def orbitStars(blackHole: BlackHole)(implicit rotable: Rotary[Star]): BlackHole =
-      blackHole.copy(stars = blackHole.stars.map(star => (draw[Star] compose rotable.rotate compose (orbit[Star, BlackHole](_: Star, blackHole)) compose orbitPlanets) (star)))
+    def orbitStars(blackHole: BlackHole)(implicit rotary: Rotary[Star]): BlackHole =
+      blackHole.copy(stars = blackHole.stars.map(star => (draw[Star] compose rotary.rotate compose (orbit[Star, BlackHole](_: Star, blackHole)) compose orbitPlanets) (star)))
 
     def tenants: Planet => Planet = (planet: Planet) =>
       planet.copy(tenants = planet.tenants.map(tenant => (draw[Tenant] compose (liveOnPlanet(_, planet)))(tenant)))
@@ -142,8 +139,11 @@ object FunctionalCompositionApp {
     def orbitGalaxies: List[BlackHole] => List[BlackHole] = (blackHoles: List[BlackHole]) =>
       blackHoles.map(blackHole => (draw[BlackHole] compose orbitStars) (blackHole))
 
+    def orbitPlanets(star: Star)(implicit rotary: Rotary[Planet]): Star = {
+      star.copy(planets = star.planets.map(planet => (draw[Planet] compose rotary.rotate compose (orbit[Planet, Star](_: Planet, star)) compose orbitSatellites andThen tenants)(planet)))
+    } 
     def render(): Unit = {
-      blackHole = (draw[BlackHole] compose orbitStars) (blackHole)
+      //built your Universe here
     }
 
     renderScreen(render)

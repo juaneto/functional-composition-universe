@@ -41,7 +41,4 @@ object Model {
     def apply[T: Rotary]: Rotary[T] = implicitly
   }
 
-
-
 }
-

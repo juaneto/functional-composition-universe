@@ -41,6 +41,7 @@ object Star {
   }
 
   implicit object StarRotary extends Rotary[Star] {
+
     override def copyRotation(s: Star, image: Image): Star = {
       Star(image, s.position, s.size, s.mass, s.rotation, s.distance, s.angle, s.planets)
     }
@@ -58,4 +59,3 @@ object Star {
     override def getImage(x: Star): Image = x.image
   }
 }
-

@@ -59,4 +59,3 @@ object Satellite {
     override def getImage(x: Satellite): Image = x.image
   }
 }
-
